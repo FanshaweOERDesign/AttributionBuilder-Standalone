@@ -1,6 +1,6 @@
 # AttributionBuilder
 
-AttributionBuilder composes a standard attribution string for an online OER (**O**pen **E**ducation **R**esource), and is especially geared towards those resources available on the Pressbooks platform or through OpenStax. A [downloadable standalone version](https://github.com/JBJBEnoit/AttributionBuilder-Standalone/releases/tag/Version1.3) and an [online version](https://jbjbenoit.github.io/AttributionBuilder/) are available. For Pressbooks and OpenStax resources, the AttributionBuider does all the work for you, turning this:
+AttributionBuilder composes a standard attribution string for an online OER (**O**pen **E**ducation **R**esource), and is especially geared towards those resources available on the Pressbooks platform or through OpenStax. A [downloadable standalone version](https://github.com/FanshaweOERDesign/AttributionBuilder-Standalone/releases/tag/v1.4) and an [online version](https://jbjbenoit.github.io/AttributionBuilder/) are available. For Pressbooks and OpenStax resources, the AttributionBuider does all the work for you, turning this:
 
     https://ecampusontario.pressbooks.pub/fanshaweoerdesignstudio/chapter/open-initiative-at-fanshawe-college/
 
