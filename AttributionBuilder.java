@@ -371,6 +371,18 @@ THE SOFTWARE.
 				}
 				catch(Exception ex)
 				{
+					currentAttribution.pageURL = url;
+					buildManualAttribution(currentAttribution);
+					if (currentProject != null && autosave)
+					{
+						saveAttributionToCurrentProject();
+						
+						if (projectWindow != null)
+						{
+							projectWindow.updateAttributionTable(currentProject);
+						}
+					}
+					
 					ex.printStackTrace();				
 				}
 			}
