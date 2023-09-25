@@ -182,6 +182,7 @@ public class ButtonColumn extends AbstractCellEditor
 		{
 			renderButton.setForeground(table.getForeground());
 			renderButton.setBackground(UIManager.getColor("Button.background"));
+			
 		}
 
 		if (hasFocus)
@@ -260,4 +261,10 @@ public class ButtonColumn extends AbstractCellEditor
     public void mouseClicked(MouseEvent e) {}
 	public void mouseEntered(MouseEvent e) {}
     public void mouseExited(MouseEvent e) {}
+    
+    public void setPadding(Insets insets)
+    {
+    	renderButton.setMargin(insets);
+    }
 }
+
