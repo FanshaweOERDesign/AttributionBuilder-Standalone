@@ -1,15 +1,10 @@
-/**
- * Program Name: ProjectWindow.java
- * Purpose: TODO
- * Coder: Jason Benoit 0885941
- * Date: Sep 17, 2023
- */
-
 
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+
 import java.awt.event.*;
 import java.util.Map;
 import java.util.TreeMap;
@@ -46,13 +41,12 @@ public class ProjectWindow extends JPanel
 	  	mainPanel.setVisible(true);
 	  	this.add(mainPanel);
 	  	this.validate();
-	  	//this.setVisible(true);
 	  	return;
 		}
 		
 		TreeMap<String, Attribution> attributions = project.getAttributions();
 		
-		String[] columnNames = {"Tag", "Page", "Book", "Author", "", ""};
+		String[] columnNames = {"Tag", "Page", "Book", "Author", "", "", ""};
 	  
 	  Object[][] data = new Object[attributions.size()][columnNames.length];
 	  
@@ -69,13 +63,16 @@ public class ProjectWindow extends JPanel
 	  	row[3] = currAttr.author;
 	  	row[4] = "Edit";
 	  	row[5] = "Copy";
+	  	row[6] = "X";
 	  	
 	  	
 	  	data[dataIdx++] = row; 
 	  }
 	  
-	  JTable table = new JTable(data, columnNames);
+	  DefaultTableModel tm = new DefaultTableModel(data, columnNames);
+	  JTable table = new JTable(tm);
 	  table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+	  table.getColumnModel().getColumn(6).setMaxWidth(25);
 	  Action copyAction = new AbstractAction() {
 
 			private static final long serialVersionUID = 1L;
@@ -93,12 +90,17 @@ public class ProjectWindow extends JPanel
 	  	
 	  };
 	  
+	  DeleteAction deleteAction = new DeleteAction(project);
+	  
 	  EditAction editAction = new EditAction(project, this);
 	  
 	  ButtonColumn cpyButtonColumn = new ButtonColumn(table, copyAction, 5);
 	  cpyButtonColumn.setMnemonic(KeyEvent.VK_D);
 	  ButtonColumn editButtonColumn = new ButtonColumn(table, editAction, 4);
 	  editButtonColumn.setMnemonic(KeyEvent.VK_D);
+	  ButtonColumn deleteButtonColumn = new ButtonColumn(table, deleteAction, 6);
+	  deleteButtonColumn.setMnemonic(KeyEvent.VK_BACK_SPACE);
+	  deleteButtonColumn.setPadding(new Insets(0,0,0,0));
 	  JScrollPane scroll = new JScrollPane(table);
 	  scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 	  scroll.setPreferredSize(new Dimension(table.getPreferredSize().width + 3, 250));
