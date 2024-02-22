@@ -22,40 +22,42 @@ THE SOFTWARE.
 **This text is from: http://opensource.org/licenses/MIT**
 !**/
 
-import java.awt.event.ActionEvent;
+import java.awt.Component;
+import javax.swing.JTextField;
 
-import javax.swing.AbstractAction;
-import javax.swing.JOptionPane;
-import javax.swing.JTable;
-import javax.swing.table.DefaultTableModel;
-
-public class DeleteAction extends AbstractAction
+public class AttributionTextField extends AttributionUIComponent
 {
-
-	private static final long serialVersionUID = 1L;
+	private JTextField textField;
 	
-	Project project;
-	
-	public DeleteAction(Project project)
+	public AttributionTextField(Attribution attribution)
 	{
-		this.project = project;
+		super(attribution);
+		textField = new JTextField();
+		textField.setColumns(30);
+	}
+	
+	public void setText(String text)
+	{
+		textField.setText(text);
+	}
+	
+	@Override
+	public boolean grabInput()
+	{
+		String value = textField.getText();
+		if (required && value.trim().length() == 0)
+		{
+			return false;
+		}
+		return super.handler.handleInput(attribution, value.trim());
 	}
 
 	@Override
-	public void actionPerformed(ActionEvent e)
+	public Component getComponent()
 	{
-		JTable table = (JTable)e.getSource();
-    int modelRow = Integer.valueOf( e.getActionCommand() );
-    String key = (String)table.getModel().getValueAt(modelRow, 0);
-    int res = JOptionPane.showConfirmDialog(table, "Really Delete Attribution '" + key + "'?\nThis action cannot be undone.", "Really Delete Attribution '" + key + "'?\nThis action cannot be undone.", JOptionPane.OK_CANCEL_OPTION);
-		
-    if (res == JOptionPane.OK_OPTION)
-    {
-    	project.getAttributions().remove(key);
-    	project.save();
-    	((DefaultTableModel) table.getModel()).removeRow(modelRow);
-    }
+		return textField;
 	}
-
 }
 //end class
+
+

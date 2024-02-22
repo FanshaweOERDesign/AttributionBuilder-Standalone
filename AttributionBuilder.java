@@ -49,13 +49,14 @@ public class AttributionBuilder extends JFrame
 	enum Resource {PRESSBOOKS, OPEN_STAX, OTHER};
 	
 	JTextField source;
-	JLabel sourceLbl, attrLabel, copyStatusLbl;
+	JLabel sourceLbl, attrLabel, copyStatusLbl, manualOrImageLbl;
 	JTextArea attributionTxt;
 	JButton buildBtn, copyBtn;
-	JCheckBox autosaveChk;
+	JCheckBox autosaveChk, imageChk;
 	
 	boolean manualInputFieldsVisible = false;
 	boolean autosave = true;
+	boolean isImage = false;
 
 	Project currentProject;
 	String currentProjectPath;
@@ -106,9 +107,30 @@ public class AttributionBuilder extends JFrame
 		});
 		JPanel sourcePanel = new JPanel();
 		sourcePanel.add(source);
+		imageChk = new JCheckBox("Image attribution");
+		imageChk.addItemListener(new ItemListener() {
+
+			@Override
+			public void itemStateChanged(ItemEvent e)
+			{
+				if (e.getStateChange() == ItemEvent.SELECTED)
+				{
+					isImage = true;
+				}
+				else
+				{
+					isImage = false;
+				}
+				
+			}
+			
+		});
 		buildBtn = new JButton("Build Attribution");
 		JPanel bBtnPanel = new JPanel();
-		
+		bBtnPanel.setLayout(new BoxLayout(bBtnPanel, BoxLayout.Y_AXIS));
+		bBtnPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+		JPanel bBtnSubPanel1 = new JPanel();
+		JPanel bBtnSubPanel2 = new JPanel();
 		buildBtn.setPreferredSize(new Dimension(160, 40));
 		buildBtn.addActionListener(listener);
 		
@@ -130,8 +152,10 @@ public class AttributionBuilder extends JFrame
 				}			
 			}		
 		});
-		
-		bBtnPanel.add(buildBtn);	
+		bBtnSubPanel1.add(imageChk);
+		bBtnSubPanel2.add(buildBtn);
+		bBtnPanel.add(bBtnSubPanel1);	
+		bBtnPanel.add(bBtnSubPanel2);	
 		inputPanel.add(srcLblPanel);
 		inputPanel.add(sourcePanel);		
 		inputPanel.add(autosaveChk);	
@@ -315,7 +339,28 @@ THE SOFTWARE.
 			{
 				copyStatusLbl.setText("");
 				String url = source.getText();
-				currentAttribution = new Attribution();
+				
+				if (isImage)
+				{
+					currentAttribution = new ImageAttribution();
+					ImageAttribution ia = (ImageAttribution)currentAttribution;
+					ia.imageURL = url;
+					buildManualAttribution(ia);
+					
+					if (currentProject != null && autosave)
+					{
+						saveAttributionToCurrentProject();
+						
+						if (projectWindow != null)
+						{
+							projectWindow.updateAttributionTable(currentProject);
+						}
+					}
+					
+					return;
+				}
+				
+				currentAttribution = new BookAttribution();
 				
 				try
 				{
@@ -328,23 +373,25 @@ THE SOFTWARE.
 					if (statusCode == 200)
 					{					
 						Document doc = connection.get();
-						
-						currentAttribution.pageURL = url;
 						Resource type = setType(doc, url);
 						
 						if (type == Resource.PRESSBOOKS || isPressbooks(doc))
-						{						
-							buildPressbooksAttribution(doc, currentAttribution);
+						{	
+							BookAttribution ba = (BookAttribution)currentAttribution;
+							ba.pageURL = url;
+							buildPressbooksAttribution(doc, ba);
 						}
 						else if (type == Resource.OPEN_STAX)
 						{
-							
-							buildOpenStaxAttribution(doc, currentAttribution);
+							BookAttribution ba = (BookAttribution)currentAttribution;
+							ba.pageURL = url;
+							buildOpenStaxAttribution(doc, ba);
 						}
 						else
 						{
-							
-							buildManualAttribution(currentAttribution);
+							BookAttribution ba = (BookAttribution)currentAttribution;
+							ba.pageURL = url;
+							buildManualAttribution(ba);
 						}	
 						
 						if (currentProject != null && autosave)
@@ -360,7 +407,7 @@ THE SOFTWARE.
 					}
 					else
 					{
-						Attribution attribution = new Attribution();
+						BookAttribution attribution = new BookAttribution();
 						attribution.pageURL = url;
 						buildManualAttribution(attribution);
 					}
@@ -371,8 +418,9 @@ THE SOFTWARE.
 				}
 				catch(Exception ex)
 				{
-					currentAttribution.pageURL = url;
-					buildManualAttribution(currentAttribution);
+					BookAttribution ba = (BookAttribution)currentAttribution;
+					ba.pageURL = url;
+					buildManualAttribution(ba);
 					if (currentProject != null && autosave)
 					{
 						saveAttributionToCurrentProject();
@@ -562,7 +610,7 @@ THE SOFTWARE.
 			return true;
 		}
 		
-		private void buildPressbooksAttribution(Document doc, Attribution attribution)
+		private void buildPressbooksAttribution(Document doc, BookAttribution attribution)
 		{
 			Elements anchorTags = doc.getElementsByTag("a");
 
@@ -573,17 +621,19 @@ THE SOFTWARE.
 				{
 					attribution.bookURL = el.attr("href");
 					attribution.bookTitle = el.html();
+
 				}
 				else if (el.attr("rel").equals("license"))
 				{
-					attribution.licenseURL = el.attr("href");
-					attribution.licenseType = el.html();
+					attribution.setLicense(el.html());
+
 				}					
 			}
 		
 			Elements titleEl = doc.getElementsByTag("title");
 			String pageTitle = titleEl.get(0).html();
 			attribution.pageTitle = pageTitle.substring(0, pageTitle.indexOf(" – "));
+			
 			
 			Elements propertyAttrs = doc.getElementsByAttribute("property");
 			
@@ -596,11 +646,16 @@ THE SOFTWARE.
 					
 			}
 			
+			if (attribution.licenseKey.equals("Other"))
+			{
+				buildManualAttribution(attribution);
+			}
+			
 			attributionTxt.setText(attribution.toString());
     
 		}
 		
-		private void buildOpenStaxAttribution(Document doc, Attribution attribution)
+		private void buildOpenStaxAttribution(Document doc, BookAttribution attribution)
 		{
 			Element pageTitleEl = doc.selectFirst("[class^=\"BookBanner__BookChapter\"]");
 			attribution.pageTitle = pageTitleEl.text();
@@ -612,8 +667,12 @@ THE SOFTWARE.
 			attribution.author = "<a href=\'https://openstax.org/\'>OpenStax - Rice University</a>";
 			
 			Element licenseEl = doc.selectFirst("[data-html=\"copyright\"] > a");
-			attribution.licenseType = licenseEl.text();
-			attribution.licenseURL = licenseEl.attr("href");
+			attribution.setLicense(licenseEl.text());
+			
+			if (attribution.licenseKey.equals("Other"))
+			{
+				buildManualAttribution(attribution);
+			}
 			
 			attributionTxt.setText(attribution.toString());
 
@@ -622,27 +681,46 @@ THE SOFTWARE.
 		private void buildManualAttribution(Attribution attribution)
 		{
 				int res = JOptionPane.OK_OPTION;
-				Attribution temp = null;
+				boolean isComplete = false;
 				
-				while (temp == null && res == JOptionPane.OK_OPTION)
+				while (!isComplete && res == JOptionPane.OK_OPTION)		
 				{
-					EditAttributionPanel editPanel = new EditAttributionPanel(attribution);
+					EditAttributionPanel editPanel = attribution.buildEditPanel();
+				
 					res = JOptionPane.showConfirmDialog(frame, editPanel, 
 							"Edit Attribution", 
-							JOptionPane.OK_CANCEL_OPTION);
+							JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
 					if (res == JOptionPane.OK_OPTION)
 					{
-						temp = editPanel.getAttribution();
+						String[] incompleteFields = editPanel.grabToAttribution();
 						
-						if (temp != null)
+						if (incompleteFields.length == 0)
 						{
-							frame.currentAttribution = temp;
-							attributionTxt.setText(temp.toString());
+							boolean licenseKeyIsOther = attribution.licenseKey != null && attribution.licenseKey.equals("Other");
+							boolean licenseTypeIsEmpty = attribution.getLicense() == null || attribution.getLicense().length() == 0;
+							if (licenseKeyIsOther && licenseTypeIsEmpty)
+							{
+								JPanel pnl = new JPanel();
+								JLabel lbl = new JLabel("Please enter additional license details");
+								pnl.add(lbl);
+								JOptionPane.showMessageDialog(frame, pnl, "Additional Info Required", JOptionPane.PLAIN_MESSAGE);
+								isComplete = false;
+								continue;
+							}
+							attributionTxt.setText(attribution.toString());
+							isComplete = true;
 						}
 						else
 						{
-							JOptionPane.showMessageDialog(frame, "Please complete all fields");
-						}					
+							String msg = "Please complete the following fields:\n";
+							for (String f : incompleteFields)
+							{
+								msg += "\n- " + f;
+							}
+							
+							JOptionPane.showMessageDialog(frame, msg, "Info Missing", JOptionPane.PLAIN_MESSAGE);
+							isComplete = false;
+						}
 					}
 				}
 		}		

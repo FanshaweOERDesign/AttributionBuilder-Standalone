@@ -22,40 +22,34 @@ THE SOFTWARE.
 **This text is from: http://opensource.org/licenses/MIT**
 !**/
 
-import java.awt.event.ActionEvent;
+import java.awt.Component;
 
-import javax.swing.AbstractAction;
-import javax.swing.JOptionPane;
-import javax.swing.JTable;
-import javax.swing.table.DefaultTableModel;
-
-public class DeleteAction extends AbstractAction
+public abstract class AttributionUIComponent
 {
-
-	private static final long serialVersionUID = 1L;
+	AttributionInputHandler handler;
 	
-	Project project;
+	Attribution attribution;
 	
-	public DeleteAction(Project project)
+	boolean required = false;
+	
+	public AttributionUIComponent(Attribution attribution) 
 	{
-		this.project = project;
+		this.attribution = attribution;		
 	}
-
-	@Override
-	public void actionPerformed(ActionEvent e)
+	
+	public void setInputHandler(AttributionInputHandler handler)
 	{
-		JTable table = (JTable)e.getSource();
-    int modelRow = Integer.valueOf( e.getActionCommand() );
-    String key = (String)table.getModel().getValueAt(modelRow, 0);
-    int res = JOptionPane.showConfirmDialog(table, "Really Delete Attribution '" + key + "'?\nThis action cannot be undone.", "Really Delete Attribution '" + key + "'?\nThis action cannot be undone.", JOptionPane.OK_CANCEL_OPTION);
-		
-    if (res == JOptionPane.OK_OPTION)
-    {
-    	project.getAttributions().remove(key);
-    	project.save();
-    	((DefaultTableModel) table.getModel()).removeRow(modelRow);
-    }
+		this.handler = handler;
 	}
-
+	
+	public void setRequired(boolean isRequired)
+	{
+		this.required = isRequired;
+	}
+	
+	public abstract boolean grabInput();
+	
+	public abstract Component getComponent();
+	
 }
 //end class

@@ -22,39 +22,72 @@ THE SOFTWARE.
 **This text is from: http://opensource.org/licenses/MIT**
 !**/
 
+import java.awt.Component;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
-import javax.swing.AbstractAction;
-import javax.swing.JOptionPane;
-import javax.swing.JTable;
-import javax.swing.table.DefaultTableModel;
+import javax.swing.JComboBox;
 
-public class DeleteAction extends AbstractAction
+public class AttributionComboBox extends AttributionUIComponent
 {
 
-	private static final long serialVersionUID = 1L;
+	JComboBox<String> comboBox;
 	
-	Project project;
+	String value;
+	private boolean noAction = false;
 	
-	public DeleteAction(Project project)
+	public AttributionComboBox(Attribution attribution, String[] values)
 	{
-		this.project = project;
+		super(attribution);
+		comboBox = new JComboBox<String>(values);
+		comboBox.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				if (noAction)
+				{
+					noAction = false;
+					return;
+				}
+				value = comboBox.getSelectedItem().toString();	
+				
+				if (handler != null)
+				{
+					grabInput();
+				}
+			}
+			
+		});
+		
+		this.attribution = attribution;
+		this.value = values[0];
 	}
 
 	@Override
-	public void actionPerformed(ActionEvent e)
+	public boolean grabInput()
 	{
-		JTable table = (JTable)e.getSource();
-    int modelRow = Integer.valueOf( e.getActionCommand() );
-    String key = (String)table.getModel().getValueAt(modelRow, 0);
-    int res = JOptionPane.showConfirmDialog(table, "Really Delete Attribution '" + key + "'?\nThis action cannot be undone.", "Really Delete Attribution '" + key + "'?\nThis action cannot be undone.", JOptionPane.OK_CANCEL_OPTION);
+		if (required && value.length() == 0)
+		{
+			return false;
+		}
 		
-    if (res == JOptionPane.OK_OPTION)
-    {
-    	project.getAttributions().remove(key);
-    	project.save();
-    	((DefaultTableModel) table.getModel()).removeRow(modelRow);
-    }
+		return handler.handleInput(attribution, value);
+		
+		
+	}
+
+	@Override
+	public Component getComponent()
+	{
+		return comboBox;
+	}
+	
+	public void setValue(String v, boolean noAction)
+	{
+		value = v;
+		this.noAction = noAction;
+		this.comboBox.setSelectedItem(v);
 	}
 
 }

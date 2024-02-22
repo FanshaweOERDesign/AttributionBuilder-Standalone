@@ -1,125 +1,118 @@
-/**
- * Program Name: EditAttributionPanel.java
- * Purpose: TODO
- * Coder: Jason Benoit 0885941
- * Date: Sep 17, 2023
- */
+/**!
+Copyright (c) 2023 Jason Benoit and David Giesbrecht
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+**This text is from: http://opensource.org/licenses/MIT**
+!**/
+
+import java.util.ArrayList;
 
 import javax.swing.*;
 
-/**
- * 
- */
 public class EditAttributionPanel extends JPanel
 {
 
 	private static final long serialVersionUID = 1L;
-	JLabel pageURLLabel, pageTitleLabel, bookTitleLabel, bookUrlLabel, authorLabel, licenseTypeLabel, licenseUrlLabel;
-	JTextField pageURLField, bookTitleField, bookURLField, pageTitleField, authorField, licenseTypeField, licenseURLField;
-	JPanel pageURLPanel, pageURLLblPanel, bookTitleLblPanel, bookTitlePanel, pageTitleLblPanel, pageTitlePanel, bookUrlLblPanel, bookUrlPanel, authorLblPanel,
-  authorPanel, licenseTypeLblPanel, licenseTypePanel, licenseUrlLblPanel, licenseUrlPanel;
 	
-	public EditAttributionPanel(Attribution attribution)
+	ArrayList<TitleFieldPair> fields;
+	
+	public EditAttributionPanel()
 	{
+		super();
 		this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		this.setAlignmentX(JPanel.CENTER_ALIGNMENT);
-		
-		pageURLLabel = new JLabel("Page URL:");
-		pageURLLblPanel = new JPanel();
-		pageURLLblPanel.add(pageURLLabel);
-		
-		pageURLField = new JTextField(attribution.pageURL);
-		pageURLField.setColumns(30);
-		pageURLPanel = new JPanel();
-		pageURLPanel.add(pageURLField);
-		
-		pageTitleLabel = new JLabel("Page Title:");
-		pageTitleLblPanel = new JPanel();
-		pageTitleLblPanel.add(pageTitleLabel);
-		
-		pageTitleField = new JTextField(attribution.pageTitle);
-		pageTitleField.setColumns(30);
-		pageTitlePanel = new JPanel();
-		pageTitlePanel.add(pageTitleField);
-
-		bookTitleLabel = new JLabel("Book Title:");
-		bookTitleLblPanel = new JPanel();
-		bookTitleLblPanel.add(bookTitleLabel);
-		
-		bookTitleField = new JTextField(attribution.bookTitle);
-		bookTitleField.setColumns(30);
-		bookTitlePanel = new JPanel();
-		bookTitlePanel.add(bookTitleField);
-		
-		bookUrlLabel = new JLabel("Book URL:");
-		bookUrlLblPanel = new JPanel();
-		bookUrlLblPanel.add(bookUrlLabel);
-		
-		bookURLField = new JTextField(attribution.bookURL);
-		bookURLField.setColumns(30);
-		bookUrlPanel = new JPanel();
-		bookUrlPanel.add(bookURLField);
-		
-		authorLabel = new JLabel("Author:");
-		authorLblPanel = new JPanel();
-		authorLblPanel.add(authorLabel);
-		
-		authorField = new JTextField(attribution.author);
-		authorField.setColumns(30);
-		authorPanel = new JPanel();
-		authorPanel.add(authorField);
-		
-		licenseTypeLabel = new JLabel("License Type:");
-		licenseTypeLblPanel = new JPanel();
-		licenseTypeLblPanel.add(licenseTypeLabel);
-		
-		licenseTypeField = new JTextField(attribution.licenseType);
-		licenseTypeField.setColumns(30);
-		licenseTypePanel = new JPanel();
-		licenseTypePanel.add(licenseTypeField);
-		
-		licenseUrlLabel = new JLabel("License URL:");
-		licenseUrlLblPanel = new JPanel();
-		licenseUrlLblPanel.add(licenseUrlLabel);
-		
-		licenseURLField = new JTextField(attribution.licenseURL);
-		licenseURLField.setColumns(30);
-		licenseUrlPanel = new JPanel();
-		licenseUrlPanel.add(licenseURLField);
-		
-		add(pageURLLblPanel);
-		add(pageURLPanel);
-		add(pageTitleLblPanel);
-		add(pageTitlePanel);
-		add(bookTitleLblPanel);
-		add(bookTitlePanel);
-		add(bookUrlLblPanel);
-		add(bookUrlPanel);
-		add(authorLblPanel);
-		add(authorPanel);
-		add(licenseTypeLblPanel);
-		add(licenseTypePanel);
-		add(licenseUrlLblPanel);
-		add(licenseUrlPanel);
+		fields = new ArrayList<>();
+			
 	}	
 	
-	public Attribution getAttribution()
+	public EditAttributionPanel add(String title, AttributionTextField textField)
 	{
-		Attribution output = new Attribution();
-		output.pageURL = pageURLField.getText();
-		output.pageTitle = pageTitleField.getText();
-		output.bookURL = bookURLField.getText();
-		output.bookTitle = bookTitleField.getText();
-		output.author = authorField.getText();
-		output.licenseURL = licenseURLField.getText();
-		output.licenseType = licenseTypeField.getText();
+		fields.add(new TitleFieldPair(title, textField));
 		
-		if (!output.isComplete())
+		return this;
+	}
+	
+	public EditAttributionPanel add(String title, AttributionComboBox comboBox)
+	{
+		fields.add(new TitleFieldPair(title, comboBox));
+		return this;
+	}
+	
+	public EditAttributionPanel remove(String title)
+	{
+		int i = 0;
+		while (i < fields.size() && !fields.get(i).title.equals(title))
 		{
-			return null;
+			i++;
 		}
 		
-		return output;
+		if (i < fields.size())
+		{
+			fields.remove(i);
+		}
+		
+		return this;
 	}
+	
+	public EditAttributionPanel build()
+	{
+		for (TitleFieldPair p : fields)
+		{
+			JPanel titlePanel = new JPanel();
+			JLabel title = new JLabel(p.title);
+			titlePanel.add(title);
+			
+			JPanel textPanel = new JPanel();
+			textPanel.add(p.field.getComponent());
+			
+			this.add(titlePanel);
+			this.add(textPanel);
+		}
+		
+		return this;
+	}
+	
+	public String[] grabToAttribution()
+	{
+		ArrayList<String> incompleteFields = new ArrayList<String>();
+		for (TitleFieldPair p : fields)
+		{		
+			if (!p.field.grabInput())
+			{
+				incompleteFields.add(p.title);
+			}
+		}
+		
+		return incompleteFields.toArray(new String[0]);
+	}
+	
+	private class TitleFieldPair
+	{
+		public String title;
+		public AttributionUIComponent field;
+		
+		public TitleFieldPair (String title, AttributionUIComponent field)
+		{
+			this.title = title;
+			this.field = field;
+		}
+	}	
 }
 //end class

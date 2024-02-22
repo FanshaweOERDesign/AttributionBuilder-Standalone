@@ -1,61 +1,51 @@
-import java.lang.reflect.Field;
+/**!
+Copyright (c) 2023 Jason Benoit and David Giesbrecht
 
-/**
- * Program Name: Attribution.java
- * Purpose: TODO
- * Coder: Jason Benoit 0885941
- * Date: Sep 16, 2023
- */
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+**This text is from: http://opensource.org/licenses/MIT**
+!**/
 
 
-public class Attribution
+public abstract class Attribution
 {
-		public String pageURL;
-    public String pageTitle;
-    public String bookURL;
-    public String bookTitle;
-    public String author;
-    public String licenseURL;
-    public String licenseType;
-    
-    public boolean isComplete()
-    {
-    	Field[] fields = this.getClass().getFields();
-    	for (Field f : fields)
-    	{
-    		try
-    		{
-    			String cur = (String)f.get(this);
-    			if (cur.length() == 0)
-    			{
-    				return false;
-    			}  		
-    		}
-    		catch (Exception ex)
-    		{
-    			ex.printStackTrace();
-    		}  		
-    	}
-    	
-    	return true;
-    }
-    
-    @Override
-    public String toString()
-    {
-    	
-    	if (!isComplete())
-    	{
-    		return null;
-    	}
-    	
-    	String output = "\"<a href='" + pageURL + "'>" + pageTitle;
-    	output += "</a>\" from <a href='" + bookURL +"'>" + bookTitle + "</a>";
-    	output += " by " + author + " is licensed under a <a href='" + licenseURL;
-    	output += "'>" + licenseType + "</a>, except where otherwise noted.";
-    	
-    	return output;
-    }
+	
+	public abstract boolean isComplete();
+	
+	public abstract EditAttributionPanel buildEditPanel();
+	
+	public abstract String getTitle();
+	
+	public abstract String getSource();
+	
+	public abstract String getAuthor();
+	
+	public abstract String getLicense();
+	
+	public void setLicense(String license)
+	{
+		licenseKey = LicenseMap.getKeyByLongName(license);
+	}
+	
+	public String licenseKey;
+	
+	public String subtype;
 
 }
 //end class
