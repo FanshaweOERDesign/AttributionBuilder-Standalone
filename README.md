@@ -12,7 +12,7 @@ which displays like this:
 
 >"[Open Initiative at Fanshawe College](https://ecampusontario.pressbooks.pub/fanshaweoerdesignstudio/chapter/open-initiative-at-fanshawe-college/)" from [The Journey to Open](https://ecampusontario.pressbooks.pub/fanshaweoerdesignstudio) by Fanshawe College is licensed under a [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License](https://creativecommons.org/licenses/by-nc-sa/4.0/), except where otherwise noted.
 
-If the AttributionBuilder detects that the resource is neither in Pressbooks nor OpenStax format, it will provide a set of input fields for entering the relevant data manually.
+If the AttributionBuilder detects that the resource is neither in Pressbooks nor OpenStax format, or if addtional license information is required, it will provide a set of input fields for entering the relevant data manually. As of version 2.0, AttributionBuilder also provides manual attribution entry for image attributions.
 
 Attributions can be grouped and saved as projects, allowing them to be recalled, edited, and exported to text format.
 
