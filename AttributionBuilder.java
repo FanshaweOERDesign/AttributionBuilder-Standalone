@@ -1,5 +1,5 @@
 /**!
-Copyright (c) 2023 Jason Benoit and David Giesbrecht
+Copyright (c) 2023 Jason Benoit, Stephany Ceron, and David Giesbrecht
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -21,12 +21,14 @@ THE SOFTWARE.
 
 **This text is from: http://opensource.org/licenses/MIT**
 !**/
+package com.oer.attributionbuilder;
 
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.util.TreeMap;
+import java.util.ArrayList;
 import java.util.Map.Entry;
 import java.awt.datatransfer.StringSelection;
 
@@ -38,7 +40,19 @@ import java.awt.*;
 import java.awt.event.*;
 import org.jsoup.*;
 import org.jsoup.select.*;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
 import org.jsoup.nodes.*;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 
 public class AttributionBuilder extends JFrame
@@ -46,7 +60,7 @@ public class AttributionBuilder extends JFrame
 
 	private static final long serialVersionUID = 1L;
 	
-	enum Resource {PRESSBOOKS, OPEN_STAX, OTHER};
+	enum Resource {PRESSBOOKS, OPEN_STAX, YOUTUBE, OTHER};
 	
 	JTextField source;
 	JLabel sourceLbl, attrLabel, copyStatusLbl, manualOrImageLbl;
@@ -70,7 +84,7 @@ public class AttributionBuilder extends JFrame
 		this.setDefaultCloseOperation(EXIT_ON_CLOSE);//destroy this object when close button is pressed
 		this.setSize(500, 415); //width and height in pixels
 		this.setLocationRelativeTo(null);//centers the JFrame on the screen.
-		Image icon = new ImageIcon(getClass().getResource("resources/oer_logo.jpg")).getImage();
+		Image icon = new ImageIcon(getClass().getResource("/resources/oer_logo.jpg")).getImage();
 		this.setIconImage(icon);
 		this.setLayout(new BorderLayout());
 		
@@ -243,11 +257,11 @@ public class AttributionBuilder extends JFrame
 		licTitle.setHorizontalAlignment(JLabel.CENTER);
 		JLabel licTxt1 = new JLabel("<html>Created by</html>");
 		licTxt1.setHorizontalAlignment(JLabel.CENTER);
-		JLabel licTxt2 = new JLabel("<html>Jason Benoit and David Giesbrecht</html>");
+		JLabel licTxt2 = new JLabel("<html>Jason Benoit, Stephany Ceron, and David Giesbrecht</html>");
 		licTxt2.setHorizontalAlignment(JLabel.CENTER);
 		JLabel licTxt3 = new JLabel("<html>at the</html>");
 		licTxt3.setHorizontalAlignment(JLabel.CENTER);
-		JLabel studioLink = new JLabel("<html><a href='https://www.google.com'>Fanshawe OER Design Studio</a>.</html>");
+		JLabel studioLink = new JLabel("<html><a href='https://www.fanshawelibrary.com/oerdesignstudio/'>Fanshawe OER Design Studio</a>.</html>");
 		studioLink.addMouseListener(new MouseAdapter(){
 			
 			@Override
@@ -277,7 +291,7 @@ licenceLink.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
 
 			        String licenceStr = """
-Copyright (c) 2023 Jason Benoit, David Giesbrecht, and Fanshawe OER Design Studio
+Copyright (c) 2023 Jason Benoit, Stephany Ceron, David Giesbrecht, and Fanshawe OER Design Studio
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -360,12 +374,25 @@ THE SOFTWARE.
 					return;
 				}
 				
-				currentAttribution = new BookAttribution();
+				// Need to use Selenium to scrape YouTube metadata
+				// Its much slower than JSoup, so we'll keep JSoup for book attributions
+				if (isYouTube(url))
+				{
+					currentAttribution = new YouTubeAttribution();
+					YouTubeAttribution ya = (YouTubeAttribution)currentAttribution;
+					ya.url = url;
+					buildYouTubeAttribution(url, ya);
+					attributionTxt.setText(currentAttribution.toString());
+					return;
+				}
 				
 				try
 				{
 					Connection connection = Jsoup.connect(url)
-							.userAgent("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/535.21 (KHTML, like Gecko) Chrome/19.0.1042.0 Safari/535.21")
+							.header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
+              .header("Accept-Encoding", "gzip, deflate, sdch")
+              .header("Accept-Language", "en-US,en;q=0.8")
+							.userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36")
 							.timeout(10000);
 					Connection.Response response = null;			
 					response = connection.execute();
@@ -374,6 +401,8 @@ THE SOFTWARE.
 					{					
 						Document doc = connection.get();
 						Resource type = setType(doc, url);
+						
+						currentAttribution = new BookAttribution();
 						
 						if (type == Resource.PRESSBOOKS || isPressbooks(doc))
 						{	
@@ -418,6 +447,7 @@ THE SOFTWARE.
 				}
 				catch(Exception ex)
 				{
+					currentAttribution = new BookAttribution();
 					BookAttribution ba = (BookAttribution)currentAttribution;
 					ba.pageURL = url;
 					buildManualAttribution(ba);
@@ -568,6 +598,14 @@ THE SOFTWARE.
 			return false;		
 		}
 		
+		private boolean isYouTube(String url)
+		{
+			Pattern pattern = Pattern.compile("^.*(youtu.be\\/|v\\/|u\\/\\w\\/|embed\\/|watch\\?v=|\\&v=|watch\\?.+&v=)([^#\\&\\?]*).*");
+			Matcher m = pattern.matcher(url);
+			
+			return m.find();
+		}
+		
 		private boolean saveAttributionToCurrentProject()
 		{
 			if (currentAttribution == null || currentAttribution.toString() == null)
@@ -676,6 +714,42 @@ THE SOFTWARE.
 			
 			attributionTxt.setText(attribution.toString());
 
+		}
+		
+		private void buildYouTubeAttribution(String url, YouTubeAttribution attribution)
+		{
+			ChromeOptions options = new ChromeOptions();
+			options.addArguments("--headless");
+			WebDriver driver = new ChromeDriver(options);
+			
+			driver.get(url);
+			
+			attribution.title = driver.findElement(By.cssSelector("meta[name='title']")).getAttribute("content");
+			
+			
+			attribution.channelTitle = driver.findElement(By.cssSelector("link[itemprop='name']")).getAttribute("content");
+			attribution.channelURL = driver.findElement(By.cssSelector("span[itemprop='author'] link[itemprop='url']")).getAttribute("href");
+			String durationMeta = driver.findElement(By.cssSelector("meta[itemprop='duration']")).getAttribute("content");
+			System.out.println(durationMeta);
+			
+			attribution.duration = formatDuration(durationMeta);
+		}
+		
+		private String formatDuration(String duration)
+		{
+			Pattern pattern = Pattern.compile("PT(\\d+)M(\\d+)S");
+			Matcher m = pattern.matcher(duration);
+			
+			if (m.find())
+			{
+				String minutes = (m.group(1) != null) ? m.group(1).replace("M", "") : "0";
+				String seconds = (m.group(2) != null) ? m.group(2).replace("S", "") : "00";
+				return minutes + ":" + seconds;
+			}
+			
+			
+			return null;
+			
 		}
 		
 		private void buildManualAttribution(Attribution attribution)
