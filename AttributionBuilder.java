@@ -28,7 +28,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
 import java.util.TreeMap;
-import java.util.ArrayList;
 import java.util.Map.Entry;
 import java.awt.datatransfer.StringSelection;
 
@@ -44,11 +43,6 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
-
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
 import org.jsoup.nodes.*;
 import java.util.regex.Pattern;
@@ -650,6 +644,29 @@ THE SOFTWARE.
 		
 		private void buildPressbooksAttribution(Document doc, BookAttribution attribution)
 		{
+			Elements metaTags = doc.getElementsByTag("meta");
+			for (Element el : metaTags) {
+				
+				if (el.attr("name").equals("citation_title")) {
+					attribution.pageTitle = el.attr("content");
+				}
+				else if (el.attr("name").equals("citation_book_title")) {
+					attribution.bookTitle = el.attr("content");
+				}
+				else if (el.attr("name").equals("citation_author")) {
+					attribution.author = el.attr("content");
+				}
+			}
+			
+			if (attribution.pageURL.contains("chapter")) {
+				attribution.bookURL = attribution.pageURL.substring(0, attribution.pageURL.lastIndexOf("/chapter")) + "/";
+			}
+			else
+			{
+				attribution.bookURL = attribution.pageURL;
+			}
+			
+			
 			Elements anchorTags = doc.getElementsByTag("a");
 
 			
@@ -668,20 +685,29 @@ THE SOFTWARE.
 				}					
 			}
 		
+			if (attribution.pageTitle == null || attribution.pageTitle.isEmpty()) {
 			Elements titleEl = doc.getElementsByTag("title");
 			String pageTitle = titleEl.get(0).html();
 			attribution.pageTitle = pageTitle.substring(0, pageTitle.indexOf(" – "));
+			}
 			
-			
-			Elements propertyAttrs = doc.getElementsByAttribute("property");
-			
-			for (Element el : propertyAttrs)
-			{
-				if (el.attr("property").equals("cc:attributionName"))
+			if (attribution.author == null || attribution.author.isEmpty()) {
+				Elements propertyAttrs = doc.getElementsByAttribute("property");
+				
+				for (Element el : propertyAttrs)
 				{
-					attribution.author = el.html();
+					if (el.attr("property").equals("cc:attributionName"))
+					{
+						attribution.author = el.html();
+					}
+						
 				}
-					
+			}
+			
+			if (attribution.licenseKey == null || attribution.licenseKey.isEmpty()) {
+				attribution.setLicense("Other");
+				attribution.hasCustomLicense = true;
+				
 			}
 			
 			if (attribution.licenseKey.equals("Other"))
